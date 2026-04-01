@@ -237,7 +237,7 @@ const StorePage = () => {
     <div className="bg-accent-50 min-h-dvh">
       {/* Page header */}
       <div className="border-accent-200 border-b bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-360 px-4 py-5 sm:px-6 lg:px-8">
           <h1 className="text-accent-900 text-xl font-bold sm:text-2xl">
             Medicine Store
           </h1>
@@ -247,7 +247,7 @@ const StorePage = () => {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-360 px-4 py-6 sm:px-6 lg:px-8">
         {/* Search + Sort + Filter bar */}
         <div className="mb-5 flex flex-wrap items-center gap-3">
           {/* Search */}

@@ -11,17 +11,45 @@ import {
   Minus,
   Package,
   CreditCard,
-  Banknote,
-  Smartphone,
   Upload,
   CheckCircle2,
   AlertCircle,
+  ArrowRight,
+  Tag,
+  Heart,
+  Truck,
+  ChevronRight,
+  Gift,
+  ChevronDown,
+  Pill,
+  Info,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAuth } from "@/shared/hooks/useAuth";
 import { useCart, type CartItem } from "@/features/store/store/cartContext";
 import useMutation from "@/shared/hooks/useMutation";
+import useSwr from "@/shared/hooks/useSwr";
 import CustomButton from "@/shared/common/CustomButton";
+import { motion, AnimatePresence } from "framer-motion";
+
+// Medicine type
+type Medicine = {
+  _id: string;
+  name: string;
+  genericName?: string;
+  category: string;
+  manufacturer: string;
+  photo?: string;
+  requiresPrescription: boolean;
+  quantity: number;
+  batches?: Array<{
+    batchNumber: string;
+    quantity: number;
+    expiryDate: string;
+    mrp?: number;
+    sellingPrice: number;
+  }>;
+};
 
 // Razorpay types
 declare global {
@@ -51,6 +79,106 @@ interface RazorpayInstance {
 
 type PayMethod = "razorpay" | "cod";
 
+// Helper functions for medicine card
+function getLowestPrice(med: Medicine) {
+  const valid = med.batches?.filter(
+    (b) => b.quantity > 0 && new Date(b.expiryDate) > new Date()
+  );
+  if (!valid || !valid.length) return null;
+  return Math.min(...valid.map((b) => b.sellingPrice));
+}
+
+function getHighestMrp(med: Medicine) {
+  const valid = med.batches?.filter(
+    (b) => b.quantity > 0 && new Date(b.expiryDate) > new Date()
+  );
+  if (!valid || !valid.length) return null;
+  const mrps = valid.map((b) => b.mrp ?? b.sellingPrice * 1.2);
+  return Math.max(...mrps);
+}
+
+// Product Recommendation Card
+function RecommendationCard({ med }: { med: Medicine }) {
+  const price = getLowestPrice(med);
+  const mrp = getHighestMrp(med);
+  const discount =
+    price && mrp && mrp > price
+      ? Math.round(((mrp - price) / mrp) * 100)
+      : null;
+
+  return (
+    <Link href={`/products/${med._id}`}>
+      <motion.div
+        whileHover={{ y: -2 }}
+        className="border-accent-200 group flex w-44 shrink-0 flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all hover:shadow-md"
+      >
+        {/* Image */}
+        <div className="bg-accent-50 relative h-36 w-full">
+          {discount && (
+            <span className="bg-error-500 absolute top-2 left-2 rounded-md px-2 py-0.5 text-[10px] font-bold text-white">
+              {discount}% OFF
+            </span>
+          )}
+          {med.photo ? (
+            <Image
+              src={med.photo}
+              alt={med.name}
+              fill
+              className="object-contain p-3"
+              sizes="176px"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <Pill size={32} className="text-accent-300" />
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="flex flex-1 flex-col p-3">
+          <h3 className="text-accent-900 line-clamp-2 text-xs leading-snug font-semibold">
+            {med.name}
+          </h3>
+          <p className="text-accent-400 mt-0.5 line-clamp-1 text-[10px]">
+            {med.manufacturer}
+          </p>
+
+          <div className="mt-2 flex items-baseline gap-1.5">
+            {price ? (
+              <>
+                <p className="text-accent-900 text-sm font-bold">
+                  ₹{price.toFixed(0)}
+                </p>
+                {mrp && mrp > price && (
+                  <p className="text-accent-400 text-[10px] line-through">
+                    ₹{mrp.toFixed(0)}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-accent-400 text-[10px]">Out of stock</p>
+            )}
+          </div>
+
+          {discount && (
+            <p className="text-primary-600 mt-1 text-[10px] font-semibold">
+              {discount}% OFF
+            </p>
+          )}
+        </div>
+
+        {/* Add Button */}
+        <div className="border-accent-100 border-t px-3 py-2">
+          <button className="bg-primary-500 hover:bg-primary-600 flex w-full items-center justify-center gap-1 rounded-md py-1.5 text-[11px] font-bold text-white transition">
+            <Plus size={12} />
+            Add
+          </button>
+        </div>
+      </motion.div>
+    </Link>
+  );
+}
+
 export default function CartPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -67,14 +195,36 @@ export default function CartPage() {
     totalItems,
   } = useCart();
 
-  const [payMethod, setPayMethod] = useState<PayMethod>("razorpay");
+  const [payMethod] = useState<PayMethod>("razorpay");
   const [placing, setPlacing] = useState(false);
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [showCouponInput, setShowCouponInput] = useState(false);
+  const [recommendationsTab, setRecommendationsTab] = useState("lastMinute");
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  // Fetch recommendations
+  const { data: recommendationsData } = useSwr("medicines?limit=12");
+  const recommendations =
+    (recommendationsData?.results?.data as Medicine[]) || [];
 
   const prescriptionPending = items.some(
     (i) => i.medicine.requiresPrescription && !i.prescriptionUrl
   );
+
+  const handleApplyCoupon = () => {
+    if (couponCode.trim().toUpperCase() === "PE25MED") {
+      setCouponApplied(true);
+      setShowCouponInput(false);
+      toast.success("Coupon applied successfully!");
+    } else {
+      toast.error("Invalid coupon code");
+    }
+  };
+
+  const savings = couponApplied ? subtotal * 0.15 : 0;
+  const finalTotal = grandTotal - savings;
 
   // Redirect guests to login
   if (!isLoading && !isAuthenticated) {
@@ -287,18 +437,38 @@ export default function CartPage() {
 
   if (totalItems === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-5 py-24 text-center">
-        <ShoppingCart size={56} className="text-accent-300" strokeWidth={1.2} />
-        <div>
-          <p className="text-accent-700 text-lg font-semibold">
+      <div className="flex min-h-[60dvh] flex-col items-center justify-center gap-6 py-24 text-center">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="bg-accent-100 rounded-full p-8"
+        >
+          <ShoppingCart
+            size={64}
+            className="text-accent-400"
+            strokeWidth={1.5}
+          />
+        </motion.div>
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <p className="text-accent-900 text-2xl font-bold">
             Your cart is empty
           </p>
-          <p className="text-accent-500 mt-1 text-sm">
-            Browse medicines and add them to your cart.
+          <p className="text-accent-600 mt-2 text-sm">
+            Browse medicines and add them to your cart to get started
           </p>
-        </div>
+        </motion.div>
         <Link href="/store">
-          <CustomButton variant="primary" fullWidth={false}>
+          <CustomButton
+            variant="primary"
+            size="large"
+            fullWidth={false}
+            endIcon={<ArrowRight size={18} />}
+          >
             Browse Store
           </CustomButton>
         </Link>
@@ -307,299 +477,501 @@ export default function CartPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
-      <h1 className="text-accent-900 text-2xl font-bold">Your Cart</h1>
+    <div className="bg-accent-50 min-h-dvh">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-accent-900 text-2xl font-bold">
+              {totalItems} Items in your Cart
+            </h1>
+            <p className="text-accent-600 mt-0.5 text-sm">Home › Cart</p>
+          </div>
+          <Link
+            href="#"
+            className="text-primary-600 hover:text-primary-700 flex items-center gap-1 text-sm font-semibold transition"
+          >
+            <Heart size={16} />
+            Saved for Later
+          </Link>
+        </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Cart Items */}
-        <div className="space-y-4 lg:col-span-2">
-          {items.map((item) => {
-            const key = `${item.medicine._id}-${item.batch.batchNumber}`;
-            const itemTotal = parseFloat(
-              (
-                item.batch.sellingPrice *
-                item.qty *
-                (1 + item.batch.gst / 100)
-              ).toFixed(2)
-            );
-            const isUploading = uploadingFor === key;
-
-            return (
-              <div
-                key={key}
-                className="border-accent-200 rounded-xl border bg-white p-4 shadow-sm"
-              >
-                <div className="flex gap-4">
-                  {/* Image */}
-                  <div className="border-accent-100 bg-accent-50 flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border">
-                    {item.medicine.photo ? (
-                      <Image
-                        src={item.medicine.photo}
-                        alt={item.medicine.name}
-                        width={56}
-                        height={56}
-                        className="h-14 w-14 object-contain"
-                      />
-                    ) : (
-                      <Package size={24} className="text-accent-300" />
-                    )}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Left Column - Cart Items */}
+          <div className="space-y-4 lg:col-span-2">
+            {/* Discount Banner */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="border-primary-300 bg-primary-50 overflow-hidden rounded-xl border"
+            >
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary-500 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                    <Gift size={20} className="text-white" />
                   </div>
-
-                  {/* Info */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-accent-900 font-semibold">
-                          {item.medicine.name}
-                        </p>
-                        <p className="text-accent-400 text-xs">
-                          Batch: {item.batch.batchNumber} | Exp:{" "}
-                          {new Date(item.batch.expiryDate).toLocaleDateString(
-                            "en-IN"
-                          )}
-                        </p>
-                        <p className="text-primary-600 text-sm font-medium">
-                          ₹{item.batch.sellingPrice}/{item.medicine.unit}
-                          <span className="text-accent-400 ml-1 text-xs font-normal">
-                            incl. {item.batch.gst}% GST
-                          </span>
-                        </p>
-                      </div>
-                      <p className="text-accent-800 shrink-0 text-sm font-bold">
-                        ₹{itemTotal.toFixed(2)}
-                      </p>
-                    </div>
-
-                    {/* Qty Controls */}
-                    <div className="mt-3 flex items-center justify-between">
-                      <div className="border-accent-300 flex items-center gap-2 rounded-lg border">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateQty(
-                              item.medicine._id,
-                              item.batch.batchNumber,
-                              -1
-                            )
-                          }
-                          className="text-accent-600 hover:bg-accent-50 rounded-l-lg px-2.5 py-1.5"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <span className="text-accent-800 min-w-[1.5rem] text-center text-sm font-medium">
-                          {item.qty}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateQty(
-                              item.medicine._id,
-                              item.batch.batchNumber,
-                              1
-                            )
-                          }
-                          className="text-accent-600 hover:bg-accent-50 rounded-r-lg px-2.5 py-1.5"
-                        >
-                          <Plus size={14} />
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          removeItem(item.medicine._id, item.batch.batchNumber)
-                        }
-                        className="text-error-400 hover:text-error-600 rounded p-1"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                  <div>
+                    <p className="text-accent-900 text-sm font-bold">
+                      Max <span className="text-primary-600">25% OFF</span>{" "}
+                      Unlocked
+                    </p>
+                    <p className="text-accent-600 text-xs">
+                      Apply coupon &ldquo;PE25MED&rdquo;
+                    </p>
                   </div>
                 </div>
+                <button
+                  onClick={() => setShowCouponInput(!showCouponInput)}
+                  className="bg-accent-900 hover:bg-accent-800 rounded-lg px-4 py-2 text-xs font-bold text-white transition"
+                >
+                  {couponApplied ? "APPLIED" : "APPLY NOW"}
+                </button>
+              </div>
 
-                {/* Prescription Upload */}
-                {item.medicine.requiresPrescription && (
-                  <div className="bg-warning-50 mt-3 rounded-lg px-3 py-2.5">
-                    <p className="text-warning-800 mb-1.5 flex items-center gap-1 text-xs font-semibold">
-                      <AlertCircle size={13} />
-                      Prescription required for this item
-                    </p>
-                    {item.prescriptionUrl ? (
-                      <p className="text-primary-700 flex items-center gap-1 text-xs font-medium">
-                        <CheckCircle2 size={12} />
-                        Prescription uploaded
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setPrescription(
-                              item.medicine._id,
-                              item.batch.batchNumber,
-                              ""
-                            )
-                          }
-                          className="text-warning-700 ml-1 underline"
-                        >
-                          Change
-                        </button>
-                      </p>
-                    ) : (
+              <AnimatePresence>
+                {showCouponInput && !couponApplied && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="border-primary-200 border-t bg-white px-4 py-3"
+                  >
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) =>
+                          setCouponCode(e.target.value.toUpperCase())
+                        }
+                        placeholder="Enter coupon code"
+                        className="border-accent-300 focus:border-primary-500 flex-1 rounded-lg border px-3 py-2 text-sm outline-none"
+                      />
                       <CustomButton
-                        variant="secondary"
+                        variant="primary"
                         size="small"
-                        fullWidth={false}
-                        loading={isUploading}
-                        startIcon={<Upload size={12} />}
-                        onClick={() => fileRefs.current[key]?.click()}
+                        onClick={handleApplyCoupon}
                       >
-                        Upload Prescription
+                        Apply
                       </CustomButton>
-                    )}
-                    <input
-                      ref={(el) => {
-                        fileRefs.current[key] = el;
-                      }}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,application/pdf"
-                      className="hidden"
-                      onChange={(e) => handlePrescriptionUpload(item, e)}
-                    />
-                  </div>
+                    </div>
+                  </motion.div>
                 )}
-              </div>
-            );
-          })}
-        </div>
+              </AnimatePresence>
+            </motion.div>
 
-        {/* Order Summary */}
-        <div className="space-y-4">
-          <div className="border-accent-200 rounded-xl border bg-white p-5 shadow-sm">
-            <h2 className="text-accent-800 mb-4 font-semibold">
-              Order Summary
-            </h2>
-            <div className="text-accent-600 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Subtotal ({totalItems} items)</span>
-                <span>₹{subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>GST</span>
-                <span>₹{totalGst.toFixed(2)}</span>
-              </div>
-              <div className="border-accent-200 flex justify-between border-t pt-2 text-base font-bold">
-                <span className="text-accent-800">Total</span>
-                <span className="text-primary-600">
-                  ₹{grandTotal.toFixed(2)}
+            {/* Unlock Extra Discount Message */}
+            <p className="text-accent-600 text-center text-xs">
+              Unlock Extra 15%* Off on these items
+            </p>
+
+            {/* Cart Items */}
+            <AnimatePresence mode="popLayout">
+              {items.map((item, index) => {
+                const key = `${item.medicine._id}-${item.batch.batchNumber}`;
+                // Discount calculation can be added here if needed
+                const isUploading = uploadingFor === key;
+
+                return (
+                  <motion.div
+                    key={key}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: index * 0.03 }}
+                    className="border-accent-200 overflow-hidden rounded-lg border bg-white shadow-sm"
+                  >
+                    <div className="flex gap-4 p-4">
+                      {/* Image */}
+                      <div className="border-accent-100 relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-white">
+                        {item.medicine.photo ? (
+                          <Image
+                            src={item.medicine.photo}
+                            alt={item.medicine.name}
+                            width={80}
+                            height={80}
+                            className="h-full w-full object-contain p-2"
+                          />
+                        ) : (
+                          <Package size={28} className="text-accent-300" />
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-accent-900 line-clamp-2 text-sm leading-snug font-semibold">
+                              {item.medicine.name}
+                            </h3>
+                            <p className="text-accent-500 mt-1 text-xs">
+                              {item.batch.batchNumber} | {item.medicine.unit}
+                            </p>
+                            <div className="mt-2 flex items-baseline gap-2">
+                              <p className="text-accent-900 text-base font-bold">
+                                ₹{item.batch.sellingPrice.toFixed(2)}
+                              </p>
+                              {/* Discount can be displayed here if available */}
+                            </div>
+                          </div>
+
+                          {/* Delete Button */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              removeItem(
+                                item.medicine._id,
+                                item.batch.batchNumber
+                              )
+                            }
+                            className="text-accent-400 hover:text-error-600 -mt-1 -mr-1 p-1 transition"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+
+                        <p className="text-accent-500 mt-2 text-xs">
+                          Delivery by{" "}
+                          <span className="font-semibold">4 Apr - 6 Apr</span>
+                        </p>
+
+                        {/* Qty Controls */}
+                        <div className="mt-3 flex items-center gap-3">
+                          <div className="border-accent-300 flex items-center rounded-md border">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateQty(
+                                  item.medicine._id,
+                                  item.batch.batchNumber,
+                                  -1
+                                )
+                              }
+                              className="text-accent-600 hover:bg-accent-50 px-3 py-1.5 transition"
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <span className="text-accent-900 border-accent-300 min-w-10 border-x px-3 py-1.5 text-center text-sm font-semibold">
+                              {item.qty}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateQty(
+                                  item.medicine._id,
+                                  item.batch.batchNumber,
+                                  1
+                                )
+                              }
+                              className="text-accent-600 hover:bg-accent-50 px-3 py-1.5 transition"
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Prescription Upload */}
+                    {item.medicine.requiresPrescription && (
+                      <div className="border-warning-100 bg-warning-50 border-t-2 px-5 py-4">
+                        <p className="text-warning-900 mb-2 flex items-center gap-1.5 text-xs font-bold">
+                          <AlertCircle size={14} />
+                          Prescription required
+                        </p>
+                        {item.prescriptionUrl ? (
+                          <div className="flex items-center justify-between rounded-lg bg-white p-2.5">
+                            <p className="text-primary-700 flex items-center gap-1.5 text-xs font-semibold">
+                              <CheckCircle2 size={13} />
+                              Prescription uploaded
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setPrescription(
+                                  item.medicine._id,
+                                  item.batch.batchNumber,
+                                  ""
+                                )
+                              }
+                              className="text-warning-700 text-xs font-semibold underline"
+                            >
+                              Change
+                            </button>
+                          </div>
+                        ) : (
+                          <CustomButton
+                            variant="secondary"
+                            size="small"
+                            fullWidth={false}
+                            loading={isUploading}
+                            startIcon={<Upload size={13} />}
+                            onClick={() => fileRefs.current[key]?.click()}
+                          >
+                            Upload Prescription
+                          </CustomButton>
+                        )}
+                        <input
+                          ref={(el) => {
+                            fileRefs.current[key] = el;
+                          }}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,application/pdf"
+                          className="hidden"
+                          onChange={(e) => handlePrescriptionUpload(item, e)}
+                        />
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+
+          {/* Order Summary */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4 }}
+            className="space-y-4"
+          >
+            {/* Bill Summary Card */}
+            <div className="border-accent-200 overflow-hidden rounded-lg border bg-white shadow-sm">
+              {/* Cart Total Header */}
+              <div className="border-accent-100 flex items-center justify-between border-b px-4 py-3">
+                <span className="text-accent-700 text-sm">Cart total:</span>
+                <span className="text-accent-900 text-xl font-bold">
+                  ₹{finalTotal.toFixed(2)}
                 </span>
               </div>
-            </div>
 
-            {/* Payment Method */}
-            <div className="mt-5">
-              <p className="text-accent-700 mb-2 text-sm font-semibold">
-                Payment Method
-              </p>
-              <div className="space-y-2">
-                {(
-                  [
-                    {
-                      value: "razorpay",
-                      label: "Online Payment",
-                      sub: "UPI, Card, Net Banking",
-                      Icon: CreditCard,
-                    },
-                    {
-                      value: "cod",
-                      label: "Cash on Delivery",
-                      sub: "Pay when delivered",
-                      Icon: Banknote,
-                    },
-                  ] as const
-                ).map(({ value, label, sub, Icon }) => (
-                  <label
-                    key={value}
-                    className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 transition-all ${
-                      payMethod === value
-                        ? "border-primary-500 bg-primary-50"
-                        : "border-accent-200 hover:border-primary-300"
+              {/* Add Delivery Address Button */}
+              <div className="border-accent-100 border-b px-4 py-3">
+                <CustomButton
+                  variant="primary"
+                  size="large"
+                  endIcon={<ChevronRight size={18} />}
+                >
+                  Add Delivery Address
+                </CustomButton>
+              </div>
+
+              {/* Coupons & Offers */}
+              <div className="border-accent-100 border-b px-4 py-3">
+                <p className="text-accent-600 mb-1 text-xs font-semibold tracking-wide uppercase">
+                  COUPONS & OFFERS
+                </p>
+                <button
+                  onClick={() => setShowCouponInput(true)}
+                  className="text-accent-700 hover:text-primary-600 flex w-full items-center justify-between py-1 transition"
+                >
+                  <div className="flex items-center gap-2">
+                    <Tag size={16} className="text-primary-500" />
+                    <span className="text-sm font-semibold">Apply coupon</span>
+                  </div>
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
+              {/* Bill Summary */}
+              <div className="px-4 py-4">
+                <h3 className="text-accent-900 mb-3 text-base font-bold">
+                  Bill Summary
+                </h3>
+                <div className="space-y-2.5">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-accent-600">Total MRP</span>
+                    <span className="text-accent-900 font-semibold">
+                      ₹{(subtotal + totalGst).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-accent-600">Delivery charges</span>
+                    <Link
+                      href="#"
+                      className="text-primary-600 flex items-center gap-1 text-xs font-semibold"
+                    >
+                      Login
+                      <Info size={12} />
+                    </Link>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-white p-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <Gift size={14} className="text-primary-500 shrink-0" />
+                      <span className="text-accent-600 text-xs">
+                        Login to check if you have Free Delivery
+                      </span>
+                    </div>
+                  </div>
+                  {couponApplied && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-primary-600">Discount on MRP</span>
+                      <span className="text-primary-600 font-semibold">
+                        - ₹{savings.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="border-accent-200 my-3 border-t" />
+                  <div className="flex justify-between text-sm">
+                    <span className="text-accent-700 font-semibold">
+                      Cart Value
+                    </span>
+                    <span className="text-accent-900 font-bold">
+                      ₹{finalTotal.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Amount to be paid */}
+              <div className="border-accent-200 border-t bg-white px-4 py-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-accent-900 text-base font-bold">
+                    Amount to be paid
+                  </span>
+                  <span className="text-accent-900 text-xl font-bold">
+                    ₹{finalTotal.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Total Savings */}
+              {couponApplied && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="border-primary-200 bg-primary-50 border-t-2 px-4 py-3"
+                >
+                  <div className="flex items-start gap-2">
+                    <ChevronDown
+                      size={14}
+                      className="text-primary-600 mt-0.5"
+                    />
+                    <div className="flex-1">
+                      <p className="text-primary-800 flex items-center gap-1.5 text-sm font-bold">
+                        <Gift size={14} />
+                        Total savings of ₹{savings.toFixed(0)} on this order
+                      </p>
+                      <p className="text-primary-700 mt-1 text-xs">
+                        MRP Discount{" "}
+                        {((savings / (subtotal + totalGst)) * 100).toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {prescriptionPending && (
+                <div className="border-warning-200 bg-warning-50 border-t px-4 py-3">
+                  <p className="text-warning-900 flex items-center gap-1.5 text-xs font-semibold">
+                    <AlertCircle size={14} />
+                    Upload all prescriptions to proceed
+                  </p>
+                </div>
+              )}
+
+              {/* Payment Method removed for now - can be added back when needed */}
+
+              {!isAuthenticated && (
+                <div className="border-accent-100 bg-accent-50 border-t px-4 py-3">
+                  <p className="text-accent-600 text-xs">
+                    <Link
+                      href="/login"
+                      className="text-primary-600 font-semibold underline"
+                    >
+                      Login
+                    </Link>{" "}
+                    to place your order
+                  </p>
+                </div>
+              )}
+
+              <div className="border-accent-100 border-t-2 p-4">
+                <CustomButton
+                  variant="primary"
+                  size="large"
+                  loading={placing}
+                  disabled={prescriptionPending || !isAuthenticated}
+                  startIcon={<CreditCard size={18} />}
+                  onClick={
+                    payMethod === "razorpay" ? handleRazorpay : handleCOD
+                  }
+                >
+                  {payMethod === "razorpay"
+                    ? `Pay ₹${finalTotal.toFixed(2)}`
+                    : "Place Order (COD)"}
+                </CustomButton>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* "You get FREE Delivery" Banner */}
+        {finalTotal > 500 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="from-tertiary-100 to-primary-100 mt-6 rounded-lg bg-linear-to-r px-6 py-4"
+          >
+            <p className="text-primary-900 flex items-center gap-2 text-sm font-bold">
+              <Truck size={18} className="text-primary-600" />
+              You get <span className="text-primary-600">
+                🚚 FREE Delivery
+              </span>{" "}
+              on this order
+            </p>
+          </motion.div>
+        )}
+
+        {/* Before you check out - Recommendations */}
+        {recommendations.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-8"
+          >
+            <div className="bg-tertiary-50 rounded-xl p-6">
+              <h2 className="text-accent-900 mb-4 text-lg font-bold">
+                Before you check out
+              </h2>
+
+              {/* Tabs */}
+              <div className="border-accent-200 mb-5 flex gap-4 border-b">
+                {[
+                  { id: "lastMinute", label: "Last Minute Buys" },
+                  { id: "forYou", label: "For You" },
+                  { id: "summer", label: "Summer Store" },
+                  { id: "discount", label: "Discount Store" },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setRecommendationsTab(tab.id)}
+                    className={`pb-2 text-sm font-semibold transition ${
+                      recommendationsTab === tab.id
+                        ? "text-primary-600 border-primary-600 border-b-2"
+                        : "text-accent-600 hover:text-primary-600"
                     }`}
                   >
-                    <input
-                      type="radio"
-                      name="payMethod"
-                      value={value}
-                      checked={payMethod === value}
-                      onChange={() => setPayMethod(value)}
-                      className="text-primary-600"
-                    />
-                    <Icon
-                      size={16}
-                      className={
-                        payMethod === value
-                          ? "text-primary-600"
-                          : "text-accent-400"
-                      }
-                    />
-                    <div className="min-w-0">
-                      <p className="text-accent-800 text-sm font-medium">
-                        {label}
-                      </p>
-                      <p className="text-accent-400 text-xs">{sub}</p>
-                    </div>
-                  </label>
+                    {tab.label}
+                  </button>
                 ))}
               </div>
-            </div>
 
-            {/* UPI badge for Razorpay */}
-            {payMethod === "razorpay" && (
-              <div className="bg-accent-50 mt-3 flex items-center gap-2 rounded-lg px-3 py-2">
-                <Smartphone size={14} className="text-primary-500 shrink-0" />
-                <p className="text-accent-500 text-xs">
-                  Powered by Razorpay — secure SSL payment
-                </p>
+              {/* Product Carousel */}
+              <div className="relative">
+                <div className="no-scrollbar flex gap-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
+                  {recommendations.slice(0, 8).map((med) => (
+                    <RecommendationCard key={med._id} med={med} />
+                  ))}
+                </div>
+
+                {/* Scroll indicator */}
+                <div className="to-tertiary-50 pointer-events-none absolute top-0 right-0 h-full w-16 bg-linear-to-l from-transparent" />
               </div>
-            )}
-
-            {prescriptionPending && (
-              <p className="text-warning-700 mt-3 flex items-center gap-1.5 text-xs">
-                <AlertCircle size={13} />
-                Upload prescriptions for all Rx items first
-              </p>
-            )}
-
-            {!isAuthenticated && (
-              <p className="text-accent-500 mt-3 text-xs">
-                <Link href="/login" className="text-primary-600 underline">
-                  Login
-                </Link>{" "}
-                to place your order.
-              </p>
-            )}
-
-            <div className="mt-5">
-              {payMethod === "razorpay" ? (
-                <CustomButton
-                  variant="primary"
-                  loading={placing}
-                  disabled={prescriptionPending || !isAuthenticated}
-                  startIcon={<CreditCard size={16} />}
-                  onClick={handleRazorpay}
-                >
-                  Pay ₹{grandTotal.toFixed(2)}
-                </CustomButton>
-              ) : (
-                <CustomButton
-                  variant="primary"
-                  loading={placing}
-                  disabled={prescriptionPending || !isAuthenticated}
-                  startIcon={<Banknote size={16} />}
-                  onClick={handleCOD}
-                >
-                  Place Order (COD)
-                </CustomButton>
-              )}
             </div>
-          </div>
-        </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );

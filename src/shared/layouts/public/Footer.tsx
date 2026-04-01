@@ -41,7 +41,7 @@ const Footer = () => {
     <footer className="bg-accent-900 text-white">
       {/* Trust bar */}
       <div className="border-accent-800 border-b">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-8 sm:px-6 md:grid-cols-4 lg:px-8">
+        <div className="mx-auto grid max-w-360 grid-cols-2 gap-6 px-4 py-8 sm:px-6 md:grid-cols-4 lg:px-8">
           {TRUST_BADGES.map((item) => (
             <div key={item.title} className="flex items-start gap-3">
               <div className="mt-0.5 shrink-0">{item.icon}</div>
@@ -55,7 +55,7 @@ const Footer = () => {
       </div>
 
       {/* Main grid */}
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-360 px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div className="lg:col-span-2">
@@ -200,7 +200,7 @@ const Footer = () => {
 
       {/* Bottom bar */}
       <div className="border-accent-800 border-t">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-5 sm:flex-row sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-360 flex-col items-center justify-between gap-3 px-4 py-5 sm:flex-row sm:px-6 lg:px-8">
           <p className="text-accent-500 text-xs">
             © {year} Sidheswar Drugs House. All rights reserved.
           </p>

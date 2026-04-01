@@ -12,10 +12,18 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  CheckCircle2,
+  ClipboardList,
+  Package,
+  Award,
+  TrendingUp,
+  Eye,
+  Filter,
 } from "lucide-react";
 import useSwr from "@/shared/hooks/useSwr";
 import { MedicineGridSkeleton } from "@/shared/common/Skeletons";
 import CustomButton from "@/shared/common/CustomButton";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Medicine {
   _id: string;
@@ -172,16 +180,19 @@ export default function PublicProductsPage() {
     inStockOnly;
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="from-accent-50 to-primary-50 min-h-dvh bg-linear-to-br via-white">
       {/* ── Page header ────────────────────────────────────────────────── */}
-      <div className="from-primary-50 to-secondary-50 border-accent-200 border-b bg-linear-to-r px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <h1 className="text-accent-900 text-3xl font-bold">
-            Medicine Catalogue
-          </h1>
-          <p className="text-accent-500 mt-1 text-sm">
-            Browse our complete range of authentic medicines
-          </p>
+      <div className="border-accent-200 border-b bg-white px-4 py-12 shadow-sm sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-360">
+          <div className="mb-6">
+            <h1 className="text-accent-900 mb-2 text-4xl font-extrabold">
+              Medicine Catalogue
+            </h1>
+            <p className="text-accent-600 text-base">
+              Browse our complete range of {pagination?.total || "authentic"}{" "}
+              medicines
+            </p>
+          </div>
 
           {/* Search bar */}
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -218,7 +229,7 @@ export default function PublicProductsPage() {
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              className="border-accent-300 focus:border-primary-500 min-w-[180px] rounded-xl border bg-white px-4 py-3 text-sm shadow-sm outline-none"
+              className="border-accent-300 focus:border-primary-500 min-w-45 rounded-xl border bg-white px-4 py-3 text-sm shadow-sm outline-none"
             >
               {SORT_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -228,128 +239,162 @@ export default function PublicProductsPage() {
             </select>
 
             {/* Filter toggle */}
-            <button
+            <motion.button
               type="button"
               onClick={() => setShowFilters((v) => !v)}
-              className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium shadow-sm transition-colors ${
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className={`flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold shadow-sm transition-all ${
                 showFilters || hasActiveFilters
-                  ? "border-primary-500 bg-primary-50 text-primary-700"
-                  : "border-accent-300 text-accent-600 hover:border-primary-300"
+                  ? "border-primary-500 bg-primary-500 text-white shadow-lg"
+                  : "border-accent-300 text-accent-700 hover:border-primary-400 hover:bg-primary-50 bg-white"
               }`}
             >
-              <SlidersHorizontal size={16} />
+              <Filter size={16} />
               Filters
               {hasActiveFilters && (
-                <span className="bg-primary-500 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-white">
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="text-primary-600 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-bold"
+                >
                   {selectedCategories.length +
                     (priceMin ? 1 : 0) +
                     (priceMax ? 1 : 0) +
                     (rxOnly ? 1 : 0) +
                     (inStockOnly ? 1 : 0)}
-                </span>
+                </motion.span>
               )}
-            </button>
+            </motion.button>
           </div>
 
           {/* Expandable Filters Panel */}
-          {showFilters && (
-            <div className="border-accent-200 mt-4 rounded-xl border bg-white p-5 shadow-sm">
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {/* Categories */}
-                <div className="lg:col-span-2">
-                  <p className="text-accent-700 mb-2 text-sm font-semibold">
-                    Category
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {CATEGORIES.map((cat) => (
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <div className="border-accent-200 mt-4 rounded-2xl border bg-white p-6 shadow-xl">
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    {/* Categories */}
+                    <div className="lg:col-span-2">
+                      <p className="text-accent-900 mb-3 flex items-center gap-2 text-sm font-bold">
+                        <Package size={14} /> Category
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {CATEGORIES.map((cat) => (
+                          <motion.button
+                            key={cat}
+                            type="button"
+                            onClick={() => toggleCategory(cat)}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                              selectedCategories.includes(cat)
+                                ? "border-primary-500 bg-primary-500 text-white shadow-md"
+                                : "border-accent-300 text-accent-600 hover:border-primary-400 hover:bg-primary-50"
+                            }`}
+                          >
+                            {cat}
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Price Range */}
+                    <div>
+                      <p className="text-accent-900 mb-3 text-sm font-bold">
+                        Price Range (₹)
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          value={priceMin}
+                          onChange={(e) => setPriceMin(e.target.value)}
+                          placeholder="Min"
+                          min={0}
+                          className="border-accent-300 focus:border-primary-500 focus:ring-primary-100 w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2"
+                        />
+                        <span className="text-accent-400 text-xs font-bold">
+                          to
+                        </span>
+                        <input
+                          type="number"
+                          value={priceMax}
+                          onChange={(e) => setPriceMax(e.target.value)}
+                          placeholder="Max"
+                          min={0}
+                          className="border-accent-300 focus:border-primary-500 focus:ring-primary-100 w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Other filters */}
+                    <div>
+                      <p className="text-accent-900 mb-3 text-sm font-bold">
+                        Other Filters
+                      </p>
+                      <div className="space-y-3">
+                        <label className="group flex cursor-pointer items-center gap-2.5">
+                          <input
+                            type="checkbox"
+                            checked={inStockOnly}
+                            onChange={(e) => setInStockOnly(e.target.checked)}
+                            className="text-primary-600 focus:ring-primary-500 h-4 w-4 rounded"
+                          />
+                          <span className="text-accent-700 group-hover:text-accent-900 text-sm font-medium">
+                            In Stock Only
+                          </span>
+                        </label>
+                        <label className="group flex cursor-pointer items-center gap-2.5">
+                          <input
+                            type="checkbox"
+                            checked={rxOnly}
+                            onChange={(e) => setRxOnly(e.target.checked)}
+                            className="text-primary-600 focus:ring-primary-500 h-4 w-4 rounded"
+                          />
+                          <span className="text-accent-700 group-hover:text-accent-900 text-sm font-medium">
+                            Prescription Medicines
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {hasActiveFilters && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="border-accent-100 mt-5 flex items-center justify-between border-t pt-5"
+                    >
+                      <p className="text-accent-600 text-sm">
+                        <span className="text-primary-600 font-bold">
+                          {selectedCategories.length +
+                            (priceMin ? 1 : 0) +
+                            (priceMax ? 1 : 0) +
+                            (rxOnly ? 1 : 0) +
+                            (inStockOnly ? 1 : 0)}
+                        </span>{" "}
+                        filter(s) active
+                      </p>
                       <button
-                        key={cat}
                         type="button"
-                        onClick={() => toggleCategory(cat)}
-                        className={`rounded-full border px-3 py-1 text-xs font-medium transition-all ${
-                          selectedCategories.includes(cat)
-                            ? "border-primary-500 bg-primary-100 text-primary-700"
-                            : "border-accent-300 text-accent-600 hover:border-primary-300"
-                        }`}
+                        onClick={clearFilters}
+                        className="text-error-600 hover:text-error-700 flex items-center gap-1.5 text-sm font-semibold transition-colors"
                       >
-                        {cat}
+                        <X size={14} />
+                        Clear all filters
                       </button>
-                    ))}
-                  </div>
+                    </motion.div>
+                  )}
                 </div>
-
-                {/* Price Range */}
-                <div>
-                  <p className="text-accent-700 mb-2 text-sm font-semibold">
-                    Price Range (₹)
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      value={priceMin}
-                      onChange={(e) => setPriceMin(e.target.value)}
-                      placeholder="Min"
-                      min={0}
-                      className="border-accent-300 focus:border-primary-500 w-full rounded-lg border px-3 py-2 text-sm outline-none"
-                    />
-                    <span className="text-accent-400 text-xs">to</span>
-                    <input
-                      type="number"
-                      value={priceMax}
-                      onChange={(e) => setPriceMax(e.target.value)}
-                      placeholder="Max"
-                      min={0}
-                      className="border-accent-300 focus:border-primary-500 w-full rounded-lg border px-3 py-2 text-sm outline-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Other filters */}
-                <div>
-                  <p className="text-accent-700 mb-2 text-sm font-semibold">
-                    Other
-                  </p>
-                  <div className="space-y-2">
-                    <label className="flex cursor-pointer items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={inStockOnly}
-                        onChange={(e) => setInStockOnly(e.target.checked)}
-                        className="text-primary-600 h-4 w-4 rounded"
-                      />
-                      <span className="text-accent-700 text-sm">
-                        In Stock Only
-                      </span>
-                    </label>
-                    <label className="flex cursor-pointer items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={rxOnly}
-                        onChange={(e) => setRxOnly(e.target.checked)}
-                        className="text-primary-600 h-4 w-4 rounded"
-                      />
-                      <span className="text-accent-700 text-sm">
-                        Prescription Medicines
-                      </span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              {hasActiveFilters && (
-                <div className="mt-4 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={clearFilters}
-                    className="text-error-600 hover:text-error-700 flex items-center gap-1 text-sm"
-                  >
-                    <X size={14} />
-                    Clear all filters
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Active filter chips */}
           {hasActiveFilters && (
@@ -399,7 +444,7 @@ export default function PublicProductsPage() {
       </div>
 
       {/* ── Product grid ─────────────────────────────────────────────── */}
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-360 px-4 py-8 sm:px-6 lg:px-8">
         {/* Result count */}
         {!isLoading && (
           <p className="text-accent-500 mb-5 text-sm">
@@ -434,111 +479,158 @@ export default function PublicProductsPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {medicines.map((med) => {
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          >
+            {medicines.map((med, index) => {
               const price = getLowestPrice(med);
               const inStock = med.quantity > 0;
 
               return (
-                <div
+                <motion.div
                   key={med._id}
-                  className="border-accent-200 group flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05, duration: 0.3 }}
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  className="group border-accent-100 hover:border-primary-200 relative flex flex-col overflow-hidden rounded-2xl border bg-white shadow-md transition-all hover:shadow-2xl"
                 >
                   {/* Image */}
-                  <div className="bg-accent-50 relative h-40 w-full overflow-hidden">
+                  <div className="from-accent-50 relative h-48 w-full overflow-hidden bg-linear-to-br to-white">
                     {med.photo ? (
                       <Image
                         src={med.photo}
                         alt={med.name}
                         fill
-                        className="object-contain p-3 transition-transform duration-300 group-hover:scale-105"
+                        className="object-contain p-4 transition-transform duration-500 group-hover:scale-110"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center">
                         <Pill
-                          size={44}
+                          size={52}
                           className="text-accent-200"
-                          strokeWidth={1}
+                          strokeWidth={1.5}
                         />
                       </div>
                     )}
-                    {/* badges */}
-                    <div className="absolute top-2 left-2 flex flex-col gap-1">
+
+                    {/* Badges */}
+                    <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
                       {med.requiresPrescription && (
-                        <span className="bg-secondary-600 rounded-full px-2 py-0.5 text-[10px] font-semibold text-white shadow">
-                          Rx
+                        <span className="bg-secondary-500 flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold text-white shadow-md">
+                          <ClipboardList size={10} /> Rx Required
                         </span>
                       )}
-                    </div>
-                    <div className="absolute top-2 right-2">
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold shadow ${
+                        className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold shadow-md ${
                           inStock
                             ? "bg-primary-500 text-white"
                             : "bg-error-500 text-white"
                         }`}
                       >
-                        {inStock ? "In Stock" : "Out of Stock"}
+                        {inStock ? (
+                          <>
+                            <CheckCircle2 size={10} /> In Stock
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle size={10} /> Out of Stock
+                          </>
+                        )}
                       </span>
                     </div>
+
+                    {/* Bestseller badge if in stock */}
+                    {inStock && price && (
+                      <div className="absolute top-3 left-3">
+                        <span className="bg-error-500 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold text-white shadow-md">
+                          <TrendingUp size={10} /> Bestseller
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Quick view on hover */}
+                    <Link href={`/products/${med._id}`}>
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="text-accent-900 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold shadow-xl"
+                        >
+                          <Eye size={16} /> Quick View
+                        </motion.button>
+                      </div>
+                    </Link>
                   </div>
 
                   {/* Info */}
                   <div className="flex flex-1 flex-col p-4">
-                    <span className="text-primary-600 mb-1 text-[10px] font-semibold tracking-wider uppercase">
-                      {med.category}
+                    <span className="bg-primary-50 text-primary-700 mb-1 inline-flex w-fit items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold">
+                      <Package size={9} /> {med.category}
                     </span>
-                    <h3 className="text-accent-900 line-clamp-2 text-sm leading-snug font-bold">
+
+                    <h3 className="text-accent-900 group-hover:text-primary-600 mt-1 line-clamp-2 text-base leading-tight font-bold transition-colors">
                       {med.name}
                     </h3>
+
                     {med.genericName && (
-                      <p className="text-accent-400 mt-0.5 line-clamp-1 text-xs">
+                      <p className="text-accent-500 mt-1 line-clamp-1 text-xs">
                         {med.genericName}
                       </p>
                     )}
-                    <p className="text-accent-400 mt-1 text-xs">
-                      {med.manufacturer}
+
+                    <p className="text-accent-400 mt-1 flex items-center gap-1 text-xs">
+                      <Award size={10} /> {med.manufacturer}
                     </p>
 
-                    <div className="mt-auto flex items-center justify-between pt-4">
+                    <div className="border-accent-100 mt-auto flex items-end justify-between border-t pt-4">
                       <div>
                         {price !== null ? (
                           <>
-                            <p className="text-primary-600 text-lg leading-none font-bold">
+                            <p className="text-primary-600 text-2xl font-extrabold">
                               ₹{price.toFixed(2)}
                             </p>
                             <p className="text-accent-400 text-[10px]">
-                              per {med.unit} (incl. GST)
+                              per {med.unit}
                             </p>
                           </>
                         ) : (
-                          <p className="text-accent-400 text-sm">—</p>
+                          <p className="text-accent-400 text-sm">
+                            Price unavailable
+                          </p>
                         )}
                       </div>
                       <Link href={`/products/${med._id}`}>
-                        <CustomButton
-                          variant={inStock ? "primary" : "cancel"}
-                          size="small"
-                          fullWidth={false}
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
                           disabled={!inStock}
-                          startIcon={
-                            inStock ? (
-                              <ShoppingCart size={13} />
-                            ) : (
-                              <AlertCircle size={13} />
-                            )
-                          }
+                          className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold shadow-md transition-all ${
+                            inStock
+                              ? "bg-primary-500 hover:bg-primary-600 text-white hover:shadow-lg"
+                              : "bg-accent-200 text-accent-400 cursor-not-allowed"
+                          }`}
                         >
-                          {inStock ? "Buy" : "OOS"}
-                        </CustomButton>
+                          {inStock ? (
+                            <>
+                              <ShoppingCart size={13} /> Add
+                            </>
+                          ) : (
+                            <>
+                              <AlertCircle size={13} /> OOS
+                            </>
+                          )}
+                        </motion.button>
                       </Link>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         )}
 
         {/* Pagination */}

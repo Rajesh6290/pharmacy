@@ -22,7 +22,7 @@ const ProductsPage = dynamic(
   () => import("@/features/public/pages/ProductsPage"),
   {
     loading: () => (
-      <div className="mx-auto max-w-7xl px-4 py-8">
+      <div className="mx-auto max-w-360 px-4 py-8">
         <div className="bg-accent-100 mb-4 h-10 w-64 animate-pulse rounded-lg" />
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 12 }).map((_, i) => (

@@ -19,6 +19,12 @@ import {
   AlertCircle,
   Search,
   Zap,
+  TrendingUp,
+  Award,
+  Headphones,
+  Package,
+  CheckCircle2,
+  Sparkles,
 } from "lucide-react";
 import {
   motion,
@@ -105,21 +111,79 @@ const features = [
   },
 ];
 
+const POPULAR_CATEGORIES = [
+  {
+    name: "Tablets & Capsules",
+    icon: "💊",
+    count: "2000+",
+    color: "from-primary-50 to-primary-100",
+    link: "/store?category=Tablet",
+  },
+  {
+    name: "Syrups & Liquids",
+    icon: "🧴",
+    count: "500+",
+    color: "from-secondary-50 to-secondary-100",
+    link: "/store?category=Syrup",
+  },
+  {
+    name: "Injections",
+    icon: "💉",
+    count: "300+",
+    color: "from-tertiary-50 to-tertiary-100",
+    link: "/store?category=Injection",
+  },
+  {
+    name: "Creams & Ointments",
+    icon: "🧪",
+    count: "400+",
+    color: "from-accent-100 to-accent-200",
+    link: "/store?category=Cream/Ointment",
+  },
+  {
+    name: "Drops",
+    icon: "💧",
+    count: "200+",
+    color: "from-primary-50 to-secondary-50",
+    link: "/store?category=Drops",
+  },
+  {
+    name: "Vitamins & Supplements",
+    icon: "🌿",
+    count: "600+",
+    color: "from-primary-100 to-primary-50",
+    link: "/store",
+  },
+];
+
 const testimonials = [
   {
     name: "Anita Mohanty",
+    role: "Regular Customer",
     text: "Ordering medicines online has never been this easy. Delivery was on time and packaging was perfect!",
     rating: 5,
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Anita",
   },
   {
     name: "Ravi Kumar",
+    role: "Senior Citizen",
     text: "The pharmacist reviewed my prescription quickly. Great service and genuine products.",
     rating: 5,
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ravi",
   },
   {
     name: "Priya Das",
+    role: "New Mother",
     text: "Best pharmacy in the area. The online store is smooth and the staff is very helpful.",
     rating: 5,
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Priya",
+  },
+  {
+    name: "Suresh Patel",
+    role: "Working Professional",
+    text: "Same-day delivery saved me during an emergency. Highly recommend their services!",
+    rating: 5,
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Suresh",
   },
 ];
 
@@ -197,85 +261,109 @@ function MedicineCard({ med }: { med: Medicine }) {
   return (
     <motion.div
       variants={fadeUp}
-      whileHover={{ y: -4, boxShadow: "0 12px 32px rgba(0,0,0,0.10)" }}
-      className="border-accent-200 group flex flex-col rounded-2xl border bg-white shadow-sm transition-colors"
+      whileHover={{ y: -6, scale: 1.02 }}
+      className="group border-accent-100 hover:border-primary-200 relative flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:shadow-xl"
     >
       {/* Image */}
-      <div className="bg-accent-50 relative h-40 w-full overflow-hidden rounded-t-2xl">
+      <div className="from-accent-50 relative h-44 w-full overflow-hidden bg-linear-to-br to-white">
         {med.photo ? (
           <Image
             src={med.photo}
             alt={med.name}
             fill
-            className="object-contain p-3 transition-transform duration-300 group-hover:scale-105"
+            className="object-contain p-4 transition-transform duration-500 group-hover:scale-110"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <Pill size={40} className="text-accent-200" strokeWidth={1.2} />
+            <Pill size={48} className="text-accent-200" strokeWidth={1.5} />
           </div>
         )}
-        <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
+
+        {/* Badges */}
+        <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
           {med.requiresPrescription && (
-            <span className="bg-secondary-100 text-secondary-700 rounded-full px-2 py-0.5 text-[10px] font-medium">
-              Rx
+            <span className="bg-secondary-500 flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold text-white shadow-md">
+              <ClipboardList size={10} /> Rx Required
             </span>
           )}
           <span
-            className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-              inStock
-                ? "bg-primary-100 text-primary-700"
-                : "bg-error-100 text-error-700"
+            className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold shadow-md ${
+              inStock ? "bg-primary-500 text-white" : "bg-error-500 text-white"
             }`}
           >
-            {inStock ? "In Stock" : "Out of Stock"}
+            {inStock ? (
+              <>
+                <CheckCircle2 size={10} /> In Stock
+              </>
+            ) : (
+              <>
+                <AlertCircle size={10} /> Out of Stock
+              </>
+            )}
           </span>
         </div>
+
+        {/* Discount badge if any */}
+        {inStock && price && (
+          <div className="absolute top-3 left-3">
+            <span className="bg-error-500 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold text-white shadow-md">
+              <TrendingUp size={10} /> Bestseller
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Info */}
       <div className="flex flex-1 flex-col p-4">
-        <p className="text-accent-400 mb-0.5 text-[11px] font-medium tracking-wide uppercase">
-          {med.category}
-        </p>
-        <h3 className="text-accent-900 line-clamp-2 text-sm leading-snug font-semibold">
+        <span className="bg-primary-50 text-primary-700 mb-1 inline-flex w-fit items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold">
+          <Package size={9} /> {med.category}
+        </span>
+
+        <h3 className="text-accent-900 group-hover:text-primary-600 mt-1 line-clamp-2 text-base leading-tight font-bold transition-colors">
           {med.name}
         </h3>
-        {med.genericName && (
-          <p className="text-accent-400 mt-0.5 text-xs">{med.genericName}</p>
-        )}
-        <p className="text-accent-400 mt-1 text-xs">by {med.manufacturer}</p>
 
-        <div className="mt-auto flex items-center justify-between pt-4">
+        {med.genericName && (
+          <p className="text-accent-500 mt-1 line-clamp-1 text-xs">
+            {med.genericName}
+          </p>
+        )}
+
+        <p className="text-accent-400 mt-1 flex items-center gap-1 text-xs">
+          <Award size={10} /> {med.manufacturer}
+        </p>
+
+        <div className="border-accent-100 mt-auto flex items-end justify-between border-t pt-4">
           <div>
             {price ? (
               <>
-                <p className="text-primary-600 text-base font-bold">
+                <p className="text-primary-600 text-xl font-extrabold">
                   ₹{price.toFixed(2)}
                 </p>
                 <p className="text-accent-400 text-[10px]">per {med.unit}</p>
               </>
             ) : (
-              <p className="text-accent-400 text-sm">—</p>
+              <p className="text-accent-400 text-sm">Price unavailable</p>
             )}
           </div>
           <Link href={`/products/${med._id}`}>
             <motion.button
-              whileTap={{ scale: 0.93 }}
+              whileTap={{ scale: 0.95 }}
               disabled={!inStock}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold shadow-md transition-all ${
                 inStock
-                  ? "bg-primary-500 hover:bg-primary-600 text-white"
-                  : "bg-accent-100 text-accent-400 cursor-not-allowed"
+                  ? "bg-primary-500 hover:bg-primary-600 text-white hover:shadow-lg"
+                  : "bg-accent-200 text-accent-400 cursor-not-allowed"
               }`}
             >
               {inStock ? (
                 <>
-                  <ShoppingCart size={12} /> Order
+                  <ShoppingCart size={13} /> Add
                 </>
               ) : (
                 <>
-                  <AlertCircle size={12} /> OOS
+                  <AlertCircle size={13} /> OOS
                 </>
               )}
             </motion.button>
@@ -343,10 +431,11 @@ const LandingPage = () => {
         </AnimatePresence>
 
         {/* Gradient overlay */}
-        <div className="to-primary-900/70 absolute inset-0 bg-linear-to-br from-black/75 via-black/55" />
+        <div className="via-primary-900/60 to-secondary-900/70 absolute inset-0 bg-linear-to-br from-black/80" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent" />
 
         {/* Content */}
-        <div className="relative mx-auto flex min-h-[88dvh] max-w-7xl flex-col items-center justify-center px-4 py-24 text-center sm:px-6 lg:px-8">
+        <div className="relative mx-auto flex min-h-[88dvh] max-w-360 flex-col items-center justify-center px-4 py-24 text-center sm:px-6 lg:px-8">
           <motion.span
             key={slide}
             initial={{ opacity: 0, y: 12 }}
@@ -476,10 +565,121 @@ const LandingPage = () => {
       </section>
 
       {/* ══════════════════════════════════════════════════════
+          CATEGORIES SHOWCASE
+         ══════════════════════════════════════════════════════ */}
+      <section className="from-primary-50 to-tertiary-50 bg-linear-to-br via-white py-20">
+        <div className="mx-auto max-w-360 px-4 sm:px-6 lg:px-8">
+          <AnimSection>
+            <motion.div variants={fadeUp} className="mb-12 text-center">
+              <span className="bg-primary-100 text-primary-700 mb-3 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase">
+                <Sparkles size={13} /> Shop by Category
+              </span>
+              <h2 className="text-accent-900 text-4xl font-extrabold">
+                Popular Medicine Categories
+              </h2>
+              <p className="text-accent-600 mt-3 text-base">
+                Browse our extensive collection by category
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+              {POPULAR_CATEGORIES.map((cat) => (
+                <motion.div
+                  key={cat.name}
+                  variants={fadeUp}
+                  whileHover={{ y: -6, scale: 1.05 }}
+                  className="group"
+                >
+                  <Link href={cat.link}>
+                    <div
+                      className={`border-accent-100 flex flex-col items-center justify-center gap-3 rounded-2xl border bg-linear-to-br ${cat.color} hover:border-primary-300 p-6 shadow-sm transition-all hover:shadow-xl`}
+                    >
+                      <div className="text-5xl">{cat.icon}</div>
+                      <div className="text-center">
+                        <h3 className="text-accent-900 mb-1 text-sm font-bold">
+                          {cat.name}
+                        </h3>
+                        <p className="text-primary-600 text-xs font-semibold">
+                          {cat.count} items
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+
+            <motion.div variants={fadeUp} className="mt-8 text-center">
+              <Link href="/store">
+                <CustomButton
+                  variant="primary"
+                  size="medium"
+                  endIcon={<ArrowRight size={16} />}
+                >
+                  View All Categories
+                </CustomButton>
+              </Link>
+            </motion.div>
+          </AnimSection>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          TRUST BADGES / BENEFITS BAR
+         ══════════════════════════════════════════════════════ */}
+      <section className="border-accent-200 border-y bg-white py-8">
+        <div className="mx-auto max-w-360 px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+            {[
+              {
+                icon: <ShieldCheck size={32} className="text-primary-500" />,
+                title: "100% Authentic",
+                desc: "Verified medicines only",
+              },
+              {
+                icon: <Truck size={32} className="text-primary-500" />,
+                title: "Fast Delivery",
+                desc: "Same-day shipping",
+              },
+              {
+                icon: <Headphones size={32} className="text-primary-500" />,
+                title: "24/7 Support",
+                desc: "Always here to help",
+              },
+              {
+                icon: <Package size={32} className="text-primary-500" />,
+                title: "Secure Packaging",
+                desc: "Safe & discreet",
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="flex flex-col items-center gap-3 text-center"
+              >
+                <div className="bg-primary-50 rounded-full p-4">
+                  {item.icon}
+                </div>
+                <div>
+                  <h3 className="text-accent-900 text-sm font-bold">
+                    {item.title}
+                  </h3>
+                  <p className="text-accent-500 text-xs">{item.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
           FEATURED MEDICINES
          ══════════════════════════════════════════════════════ */}
       <section className="bg-white py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-360 px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <AnimSection>
             <motion.div
@@ -585,7 +785,7 @@ const LandingPage = () => {
           FEATURES GRID
          ══════════════════════════════════════════════════════ */}
       <section className="bg-accent-50 py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-360 px-4 sm:px-6 lg:px-8">
           <AnimSection>
             <motion.div variants={fadeUp} className="mb-12 text-center">
               <p className="text-primary-600 mb-2 text-sm font-semibold tracking-widest uppercase">
@@ -627,7 +827,7 @@ const LandingPage = () => {
           HOW IT WORKS
          ══════════════════════════════════════════════════════ */}
       <section className="bg-white py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-360 px-4 sm:px-6 lg:px-8">
           <AnimSection>
             <motion.div variants={fadeUp} className="mb-14 text-center">
               <p className="text-primary-600 mb-2 text-sm font-semibold tracking-widest uppercase">
@@ -670,7 +870,7 @@ const LandingPage = () => {
           STATS BANNER
          ══════════════════════════════════════════════════════ */}
       <section className="bg-primary-600 py-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-360 px-4 sm:px-6 lg:px-8">
           <AnimSection className="grid grid-cols-2 gap-8 text-center md:grid-cols-4">
             {[
               { value: "5000+", label: "Medicines Available" },
@@ -692,37 +892,66 @@ const LandingPage = () => {
       {/* ══════════════════════════════════════════════════════
           TESTIMONIALS
          ══════════════════════════════════════════════════════ */}
-      <section className="bg-accent-50 py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section className="from-accent-50 to-primary-50 bg-linear-to-br via-white py-24">
+        <div className="mx-auto max-w-360 px-4 sm:px-6 lg:px-8">
           <AnimSection>
             <motion.div variants={fadeUp} className="mb-12 text-center">
-              <h2 className="text-accent-900 text-3xl font-bold">
-                What Our Customers Say
+              <span className="bg-primary-100 text-primary-700 mb-3 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase">
+                <Star size={13} className="fill-primary-700" /> Customer Reviews
+              </span>
+              <h2 className="text-accent-900 text-4xl font-extrabold">
+                Trusted by Thousands
               </h2>
+              <p className="text-accent-600 mt-3 text-base">
+                Real experiences from real customers
+              </p>
             </motion.div>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
               {testimonials.map((t) => (
                 <motion.div
                   key={t.name}
                   variants={fadeUp}
-                  whileHover={{ y: -3 }}
-                  className="border-accent-100 rounded-2xl border bg-white p-6 shadow-sm"
+                  whileHover={{ y: -6, scale: 1.02 }}
+                  className="group border-accent-100 hover:border-primary-200 relative overflow-hidden rounded-2xl border bg-white p-6 shadow-md transition-all hover:shadow-2xl"
                 >
-                  <div className="mb-3 flex gap-1">
+                  {/* Quote decoration */}
+                  <div className="text-primary-50 absolute -top-4 -right-4 font-serif text-8xl opacity-50">
+                    {`    "`}
+                  </div>
+
+                  {/* Star rating */}
+                  <div className="relative z-10 mb-3 flex gap-1">
                     {Array.from({ length: t.rating }).map((_, i) => (
                       <Star
                         key={i}
-                        size={16}
+                        size={14}
                         className="fill-warning-400 text-warning-400"
                       />
                     ))}
                   </div>
-                  <p className="text-accent-600 mb-4 text-sm leading-relaxed">
+
+                  {/* Review text */}
+                  <p className="text-accent-600 relative z-10 mb-5 text-sm leading-relaxed">
                     &ldquo;{t.text}&rdquo;
                   </p>
-                  <p className="text-accent-800 text-sm font-semibold">
-                    {t.name}
-                  </p>
+
+                  {/* Author */}
+                  <div className="border-accent-100 relative z-10 flex items-center gap-3 border-t pt-4">
+                    <div className="relative h-12 w-12 shrink-0">
+                      <Image
+                        src={t.avatar}
+                        alt={t.name}
+                        fill
+                        className="ring-primary-100 rounded-full object-cover ring-2"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-accent-900 text-sm font-bold">
+                        {t.name}
+                      </p>
+                      <p className="text-accent-500 text-xs">{t.role}</p>
+                    </div>
+                  </div>
                 </motion.div>
               ))}
             </div>
