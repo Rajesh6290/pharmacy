@@ -56,6 +56,19 @@
   --accent-900: #18181b;
   --accent: var(--accent-200);
 
+  /* Warning Color - Amber */
+  --warning-50: #fffbeb;
+  --warning-100: #fef3c7;
+  --warning-200: #fde68a;
+  --warning-300: #fcd34d;
+  --warning-400: #fbbf24;
+  --warning-500: #f59e0b;
+  --warning-600: #d97706;
+  --warning-700: #b45309;
+  --warning-800: #92400e;
+  --warning-900: #78350f;
+  --warning: var(--warning-500);
+
   /* Error/Cancel Color - Red */
   --error-50: #fef2f2;
   --error-100: #fee2e2;
@@ -127,6 +140,19 @@
   --color-accent-800: var(--accent-800);
   --color-accent-900: var(--accent-900);
   --color-accent: var(--accent);
+
+  /* Warning Color Shades */
+  --color-warning-50: var(--warning-50);
+  --color-warning-100: var(--warning-100);
+  --color-warning-200: var(--warning-200);
+  --color-warning-300: var(--warning-300);
+  --color-warning-400: var(--warning-400);
+  --color-warning-500: var(--warning-500);
+  --color-warning-600: var(--warning-600);
+  --color-warning-700: var(--warning-700);
+  --color-warning-800: var(--warning-800);
+  --color-warning-900: var(--warning-900);
+  --color-warning: var(--warning);
 
   /* Error Color Shades */
   --color-error-50: var(--error-50);
