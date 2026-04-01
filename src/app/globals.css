@@ -3,6 +3,71 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Primary Color - Emerald Green (from logo) */
+  --primary-50: #ecfdf5;
+  --primary-100: #d1fae5;
+  --primary-200: #a7f3d0;
+  --primary-300: #6ee7b7;
+  --primary-400: #34d399;
+  --primary-500: #26834f;
+  --primary-600: #237d51;
+  --primary-700: #1f6944;
+  --primary-800: #1a5437;
+  --primary-900: #14402a;
+  --primary: var(--primary-500);
+
+  /* Secondary Color - Teal (from logo) */
+  --secondary-50: #f0fdfa;
+  --secondary-100: #ccfbf1;
+  --secondary-200: #99f6e4;
+  --secondary-300: #5eead4;
+  --secondary-400: #2dd4bf;
+  --secondary-500: #14b8a6;
+  --secondary-600: #0d9488;
+  --secondary-700: #0f766e;
+  --secondary-800: #115e59;
+  --secondary-900: #134e4a;
+  --secondary: var(--secondary-500);
+
+  /* Tertiary Color - Cyan Blue (from logo) */
+  --tertiary-50: #ecfeff;
+  --tertiary-100: #cffafe;
+  --tertiary-200: #a5f3fc;
+  --tertiary-300: #74c9d5;
+  --tertiary-400: #22d3ee;
+  --tertiary-500: #06b6d4;
+  --tertiary-600: #0891b2;
+  --tertiary-700: #0e7490;
+  --tertiary-800: #155e75;
+  --tertiary-900: #164e63;
+  --tertiary: var(--tertiary-300);
+
+  /* Accent Color - Light Gray (from logo) */
+  --accent-50: #fafafa;
+  --accent-100: #f4f4f5;
+  --accent-200: #e8e9e8;
+  --accent-300: #d4d4d8;
+  --accent-400: #a1a1aa;
+  --accent-500: #71717a;
+  --accent-600: #52525b;
+  --accent-700: #3f3f46;
+  --accent-800: #27272a;
+  --accent-900: #18181b;
+  --accent: var(--accent-200);
+
+  /* Error/Cancel Color - Red */
+  --error-50: #fef2f2;
+  --error-100: #fee2e2;
+  --error-200: #fecaca;
+  --error-300: #fca5a5;
+  --error-400: #f87171;
+  --error-500: #ef4444;
+  --error-600: #dc2626;
+  --error-700: #b91c1c;
+  --error-800: #991b1b;
+  --error-900: #7f1d1d;
+  --error: var(--error-600);
 }
 
 @theme inline {
@@ -10,10 +75,80 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-work-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Primary Color Shades */
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary: var(--primary);
+
+  /* Secondary Color Shades */
+  --color-secondary-50: var(--secondary-50);
+  --color-secondary-100: var(--secondary-100);
+  --color-secondary-200: var(--secondary-200);
+  --color-secondary-300: var(--secondary-300);
+  --color-secondary-400: var(--secondary-400);
+  --color-secondary-500: var(--secondary-500);
+  --color-secondary-600: var(--secondary-600);
+  --color-secondary-700: var(--secondary-700);
+  --color-secondary-800: var(--secondary-800);
+  --color-secondary-900: var(--secondary-900);
+  --color-secondary: var(--secondary);
+
+  /* Tertiary Color Shades */
+  --color-tertiary-50: var(--tertiary-50);
+  --color-tertiary-100: var(--tertiary-100);
+  --color-tertiary-200: var(--tertiary-200);
+  --color-tertiary-300: var(--tertiary-300);
+  --color-tertiary-400: var(--tertiary-400);
+  --color-tertiary-500: var(--tertiary-500);
+  --color-tertiary-600: var(--tertiary-600);
+  --color-tertiary-700: var(--tertiary-700);
+  --color-tertiary-800: var(--tertiary-800);
+  --color-tertiary-900: var(--tertiary-900);
+  --color-tertiary: var(--tertiary);
+
+  /* Accent Color Shades */
+  --color-accent-50: var(--accent-50);
+  --color-accent-100: var(--accent-100);
+  --color-accent-200: var(--accent-200);
+  --color-accent-300: var(--accent-300);
+  --color-accent-400: var(--accent-400);
+  --color-accent-500: var(--accent-500);
+  --color-accent-600: var(--accent-600);
+  --color-accent-700: var(--accent-700);
+  --color-accent-800: var(--accent-800);
+  --color-accent-900: var(--accent-900);
+  --color-accent: var(--accent);
+
+  /* Error Color Shades */
+  --color-error-50: var(--error-50);
+  --color-error-100: var(--error-100);
+  --color-error-200: var(--error-200);
+  --color-error-300: var(--error-300);
+  --color-error-400: var(--error-400);
+  --color-error-500: var(--error-500);
+  --color-error-600: var(--error-600);
+  --color-error-700: var(--error-700);
+  --color-error-800: var(--error-800);
+  --color-error-900: var(--error-900);
+  --color-error: var(--error);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    "Work Sans",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 }
